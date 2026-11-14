@@ -18,7 +18,7 @@ PX4 v1.17.0, official `multicopter` variant, plus the RPLidar driver from `../px
 ## cubepilot_cubeorangeplus_rplidar.px4
 
 PX4 v1.17.0 for the **Cube Orange Plus** (board id 1063), default variant, with the RPLidar driver
-and the patches in `../px4_rplidar/patches`. Flash 99.40% used. Flashed and tested on 2026-11-15:
+and the patches in `../px4_rplidar/patches`. Flash 99.40% used. Flashed and tested on 2026-11-14:
 lidar streams on TELEM2 (`/dev/ttyS1`), also after a cold start.
 
 - Set `SYS_AUTOSTART` (4001 = quad X) and reboot, then `SENS_RPLIDAR_CFG` = 102 (TELEM 2),

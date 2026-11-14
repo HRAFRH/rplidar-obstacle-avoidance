@@ -2,7 +2,7 @@
 
 A 360 degree obstacle display for a flight controller with a lidar, like Mission Planner's
 Proximity view. Works with PX4 (with the patches in `../px4_rplidar/patches`) and ArduPilot.
-Tested on Windows 11 with a Pixhawk 6X, PX4 v1.17.0 and an RPLidar A2M12, 2026-11-15.
+Tested on Windows 11 with a Pixhawk 6X, PX4 v1.17.0 and an RPLidar A2M12, 2026-11-14.
 
 ## Start
 

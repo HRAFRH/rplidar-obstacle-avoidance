@@ -3,7 +3,7 @@
 `LidarRadarInstrument.qml` draws the 360 degree lidar scan in QGC's Fly view, next to QGC's own
 attitude and compass instrument. No QGC rebuild is needed: QGC loads its instrument panel from the
 file named in its settings, and accepts a local file there. Tested with QGroundControl Daily
-v5.0.3-1068 on Windows, 2026-11-15, with PX4 v1.17.0 plus the patches in `../px4_rplidar/patches`.
+v5.0.3-1068 on Windows, 2026-11-14, with PX4 v1.17.0 plus the patches in `../px4_rplidar/patches`.
 
 What it shows:
 - Front is up and matches the flight controller's arrow (the scan is in the body frame).

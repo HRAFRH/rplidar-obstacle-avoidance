@@ -5,7 +5,7 @@ It publishes `obstacle_distance`, which PX4's Collision Prevention uses in Posit
 
 Written against PX4 v1.17.0 for the RPLidar A2M12 on a Pixhawk 6X.
 
-**Status: runs on a Pixhawk 6X with a real A2M12 (bench, 2026-11-15). Not flown; Collision Prevention not yet tested.**
+**Status: runs on a Pixhawk 6X with a real A2M12 (bench, 2026-11-14). Not flown; Collision Prevention not yet tested.**
 
 - Bench result: streaming at 19.9 Hz, 184 samples per revolution, model 0x2C fw 1.32 hw 6, health 0,
   no resyncs; `obstacle_distance` fills 71 of 72 bins every 50 ms.
@@ -28,7 +28,7 @@ Written against PX4 v1.17.0 for the RPLidar A2M12 on a Pixhawk 6X.
 - `px4_fmu-v6x_default` does not fit with that compiler (20.9 KB over), so use the multicopter variant.
 - `test/host_sim` runs the real `rplidar.cpp` against a simulated RPLidar; all 10 scenarios pass
   (clang on Windows and g++ 11.4 on Ubuntu).
-- Flashed and run with the real sensor on 2026-11-15 (see above).
+- Flashed and run with the real sensor on 2026-11-14 (see above).
 
 Nothing here has flown. Bench-test with props off before any flight.
 
