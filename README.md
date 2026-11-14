@@ -1,6 +1,6 @@
 # 360° Lidar Obstacle Avoidance for PX4 and ArduPilot
 
-**A Slamtec RPLidar A2M12 wired straight to the flight controller — no companion computer — with
+**A Slamtec RPLidar A2M12 wired straight to the flight controller (no companion computer), with
 a new PX4 driver, two PX4 fixes, a radar display inside QGroundControl and a desktop radar app.**
 
 Tested on a **Holybro Pixhawk 6X** and a **CubePilot Cube Orange Plus** (PX4 v1.17.0), and with
@@ -23,7 +23,7 @@ Collision Prevention directly over a serial port, and makes the scan visible to 
 |---|---|
 | [`px4_rplidar/`](px4_rplidar) | **PX4 driver** for RPLidar scanners (`rplidar start -d <port>`). Publishes `obstacle_distance` (72 sectors × 5°) for Collision Prevention. Host test bench with a simulated lidar (10 scenarios). |
 | [`px4_rplidar/patches/`](px4_rplidar/patches) | **Three PX4 fixes**: keep the 5 V peripheral rail on at boot (Pixhawk 6X, Cube Orange Plus) and send the raw scan to the ground station when Collision Prevention is idle. |
-| [`qgc/`](qgc) | **Radar inside QGroundControl** — a QML instrument loaded from QGC's settings, no QGC rebuild. |
+| [`qgc/`](qgc) | **Radar inside QGroundControl**: a QML instrument loaded from QGC's settings, no QGC rebuild. |
 | [`radar_app/`](radar_app) | **Desktop radar** (Python), auto-detects the flight controller, parking-sensor beeps. |
 | [`ardupilot/`](ardupilot) | ArduCopter parameters for the same lidar (native ArduPilot support). |
 | [`firmware/`](firmware) | Built PX4 firmware for the Pixhawk 6X and the Cube Orange Plus. |
@@ -84,10 +84,10 @@ the model, health, scan rate, byte counters and error counters.
 On the first PX4 test the driver sent its commands and **received zero bytes**, although the motor
 spun and the same wiring worked under ArduPilot. Narrowing it down, step by step:
 
-1. **Byte counters in the driver** showed 0 bytes received — so not a parsing bug.
+1. **Byte counters in the driver** showed 0 bytes received, so it was not a parsing bug.
 2. **Software path checked against ArduPilot:** same UART5 and pins, same baud (NuttX passes 256000
    through as `BOTHER`), flow control off, inversion off, RX DMA polled every 1 ms. All fine.
-3. **A/B test:** flashing ArduCopter back — the lidar was silent there too, until **the lidar alone
+3. **A/B test:** after flashing ArduCopter back, the lidar was silent there too, until **the lidar alone
    was power-cycled**. The lidar had hung.
 4. **Started the driver by hand a minute after boot:** still hung → not the driver's commands.
 5. **Board code:** PX4's Pixhawk 6X configuration starts the 5 V peripheral rail **off** in its early
@@ -113,7 +113,7 @@ baud, 5 V supply up to 1.5 A at start-up).
 
 The flight controller's own 5 V rail measured 4.1–4.6 V on USB, below the lidar's 4.9 V minimum:
 **use a BEC for flight**. Mount the lidar level, high enough that props and the GPS mast do not block
-it, front (the side opposite the cable) towards the nose — or set `RPL_YAW_OFF`.
+it, front (the side opposite the cable) towards the nose, or set `RPL_YAW_OFF`.
 
 ## Quick start (PX4)
 
@@ -140,7 +140,7 @@ ArduPilot: load [`ardupilot/rplidar_a2m12_telem2.param`](ardupilot/rplidar_a2m12
 
 ## Radar in QGroundControl
 
-Add one line to QGroundControl's settings file (QGC closed) — details in [`qgc/README.md`](qgc/README.md):
+Add one line to QGroundControl's settings file (QGC closed). Details are in [`qgc/README.md`](qgc/README.md):
 
 ```ini
 [FlyView]
@@ -159,8 +159,8 @@ See [`radar_app/README.md`](radar_app/README.md).
 
 ## Testing
 
-- `px4_rplidar/test/test_protocol.cpp` — protocol decoding.
-- `px4_rplidar/test/host_sim` — compiles the real driver against stand-ins for PX4 and runs it
+- `px4_rplidar/test/test_protocol.cpp`: protocol decoding.
+- `px4_rplidar/test/host_sim`: compiles the real driver against stand-ins for PX4 and runs it
   against a simulated lidar: normal scan, motor off, corrupted bytes, health error and reset,
   upside-down, yaw offset, no sensor, split reads, 30° pitch, 5 Hz scan.
 - Bench tests on both flight controllers (above).
@@ -175,7 +175,7 @@ See [`radar_app/README.md`](radar_app/README.md).
 
 ## License
 
-BSD 3-Clause (same as PX4) — see [LICENSE](LICENSE). The patches modify PX4 files and stay under
+BSD 3-Clause (same as PX4), see [LICENSE](LICENSE). The patches modify PX4 files and stay under
 PX4's BSD 3-Clause license.
 
-**Author:** Achraf Rahibe — [portfolio](https://hrafrh.github.io/) · [GitHub](https://github.com/HRAFRH)
+**Author:** Achraf Rahibe · [portfolio](https://hrafrh.github.io/) · [GitHub](https://github.com/HRAFRH)
