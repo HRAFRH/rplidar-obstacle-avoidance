@@ -100,6 +100,14 @@ fix.
 
 ## Hardware and wiring
 
+<p>
+<img src="docs/images/bench-cube-orange-qgc.jpg" width="56%" alt="Cube Orange Plus bench test with the lidar and the radar in QGroundControl">
+<img src="docs/images/bench-pixhawk6x-radar.jpg" width="40%" alt="Pixhawk 6X bench test with the lidar and the desktop radar">
+</p>
+
+Bench tests: Cube Orange Plus with the radar in QGroundControl (left), Pixhawk 6X with an early
+version of the desktop radar (right).
+
 RPLidar A2M12 connector: red 5 V, yellow TX, green RX, black GND, blue MOTOCTL (3.3 V UART, 256000
 baud, 5 V supply up to 1.5 A at start-up).
 
