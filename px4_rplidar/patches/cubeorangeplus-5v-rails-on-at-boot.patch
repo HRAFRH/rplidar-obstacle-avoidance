@@ -1,0 +1,13 @@
+diff --git a/boards/cubepilot/cubeorangeplus/src/board_config.h b/boards/cubepilot/cubeorangeplus/src/board_config.h
+index a77723b491..29e87d192a 100644
+--- a/boards/cubepilot/cubeorangeplus/src/board_config.h
++++ b/boards/cubepilot/cubeorangeplus/src/board_config.h
+@@ -114,7 +114,7 @@
+ #define GPIO_nVDD_BRICK2_VALID          /* PB7  */ (GPIO_INPUT|GPIO_PULLUP|GPIO_PORTB|GPIO_PIN7) // VDD_BACKUP_VALID
+ #define GPIO_nVDD_USB_VALID             /* PC0  */ (GPIO_INPUT|GPIO_PULLUP|GPIO_PORTC|GPIO_PIN0) // VBUS_VALID
+ #define GPIO_VDD_3V3_SENSORS_EN         /* PE3  */ (GPIO_OUTPUT|GPIO_PUSHPULL|GPIO_SPEED_2MHz|GPIO_OUTPUT_CLEAR|GPIO_PORTE|GPIO_PIN3) // VDD_3V3_SENSORS_EN
+-#define GPIO_nVDD_5V_PERIPH_EN          /* PA8  */ (GPIO_OUTPUT|GPIO_PUSHPULL|GPIO_SPEED_2MHz|GPIO_OUTPUT_SET|GPIO_PORTA|GPIO_PIN8) // VDD_5V_PERIPH_EN
++#define GPIO_nVDD_5V_PERIPH_EN          /* PA8  */ (GPIO_OUTPUT|GPIO_PUSHPULL|GPIO_SPEED_2MHz|GPIO_OUTPUT_CLEAR|GPIO_PORTA|GPIO_PIN8) // VDD_5V_PERIPH_EN
+ #define GPIO_nVDD_5V_PERIPH_OC          /* PE15 */ (GPIO_INPUT|GPIO_PULLUP|GPIO_PORTE|GPIO_PIN15) // VDD_5V_PERIPH_OC
+ #define GPIO_nVDD_5V_HIPOWER_OC         /* PE10 */ (GPIO_INPUT|GPIO_PULLUP|GPIO_PORTE|GPIO_PIN10) // VDD_5V_HIPOWER_OC
+ 

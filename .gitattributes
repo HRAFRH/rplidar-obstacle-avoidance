@@ -1,0 +1,7 @@
+# Keep Linux line endings for scripts, patches and sources (they are used on Ubuntu)
+* text=auto eol=lf
+*.bat text eol=crlf
+*.png binary
+*.webp binary
+*.px4 binary
+*.apj binary

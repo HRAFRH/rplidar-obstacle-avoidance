@@ -1,0 +1,56 @@
+diff --git a/src/modules/mavlink/mavlink_main.cpp b/src/modules/mavlink/mavlink_main.cpp
+index 0312a0b6b2..b8f048277c 100644
+--- a/src/modules/mavlink/mavlink_main.cpp
++++ b/src/modules/mavlink/mavlink_main.cpp
+@@ -1674,6 +1674,7 @@ Mavlink::configure_streams_to_default(const char *configure_single_stream)
+ 		configure_stream_local("MAG_CAL_REPORT", 1.0f);
+ 		configure_stream_local("MANUAL_CONTROL", 5.0f);
+ 		configure_stream_local("NAV_CONTROLLER_OUTPUT", 10.0f);
++		configure_stream_local("OBSTACLE_DISTANCE", 10.0f);
+ 		configure_stream_local("OPEN_DRONE_ID_LOCATION", 1.f);
+ 		configure_stream_local("OPEN_DRONE_ID_SYSTEM", 1.f);
+ 		configure_stream_local("OPEN_DRONE_ID_ARM_STATUS", 1.f);
+diff --git a/src/modules/mavlink/streams/OBSTACLE_DISTANCE.hpp b/src/modules/mavlink/streams/OBSTACLE_DISTANCE.hpp
+index 93d936dea4..2f3dc26536 100644
+--- a/src/modules/mavlink/streams/OBSTACLE_DISTANCE.hpp
++++ b/src/modules/mavlink/streams/OBSTACLE_DISTANCE.hpp
+@@ -49,8 +49,8 @@ public:
+ 
+ 	unsigned get_size() override
+ 	{
+-		return _obstacle_distance_fused_sub.advertised() ? (MAVLINK_MSG_ID_OBSTACLE_DISTANCE_LEN +
+-				MAVLINK_NUM_NON_PAYLOAD_BYTES) : 0;
++		return (_obstacle_distance_fused_sub.advertised() || _obstacle_distance_sub.advertised()) ?
++		       (MAVLINK_MSG_ID_OBSTACLE_DISTANCE_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES) : 0;
+ 	}
+ 
+ private:
+@@ -58,11 +58,28 @@ private:
+ 
+ 	uORB::Subscription _obstacle_distance_fused_sub{ORB_ID(obstacle_distance_fused)};
+ 
++	// Raw sensor data (e.g. the RPLidar driver). Sent when Collision Prevention is not running,
++	// so ground stations can show the scan without Position mode.
++	uORB::Subscription _obstacle_distance_sub{ORB_ID(obstacle_distance)};
++	hrt_abstime _last_fused_time{0};
++	static constexpr hrt_abstime FUSED_TIMEOUT_US{1000000};
++
+ 	bool send() override
+ 	{
+ 		obstacle_distance_s obstacle_distance;
+ 
++		bool updated = false;
++
+ 		if (_obstacle_distance_fused_sub.update(&obstacle_distance)) {
++			_last_fused_time = hrt_absolute_time();
++			updated = true;
++
++		} else if ((hrt_elapsed_time(&_last_fused_time) > FUSED_TIMEOUT_US)
++			   && _obstacle_distance_sub.update(&obstacle_distance)) {
++			updated = true;
++		}
++
++		if (updated) {
+ 			mavlink_obstacle_distance_t msg{};
+ 
+ 			msg.time_usec = obstacle_distance.timestamp;

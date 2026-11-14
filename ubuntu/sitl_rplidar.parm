@@ -1,0 +1,9 @@
+# Simulated RPLidar A2 on SERIAL5 plus the same simple avoidance settings as the real drone.
+SERIAL5_PROTOCOL 11
+PRX1_TYPE 5
+PRX1_ORIENT 0
+AVOID_ENABLE 7
+AVOID_BEHAVE 1
+AVOID_MARGIN 2
+AVOID_DIST_MAX 5
+DISARM_DELAY 0

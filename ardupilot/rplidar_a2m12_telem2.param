@@ -1,0 +1,19 @@
+# RPLidar A2M12 on TELEM2 (SERIAL2) with simple obstacle avoidance - ArduCopter 4.7
+# Load with Mission Planner: Config > Full Parameter List > Load from file, then Write Params and reboot.
+# Applied and verified on a Pixhawk 6X on 2026-11-14. SERIAL2 is TELEM2 on the Pixhawk 6X, 6C and Cube Orange.
+
+# --- serial port: TELEM2 talks to the lidar ---
+SERIAL2_PROTOCOL,11
+SERIAL2_BAUD,256
+BRD_SER2_RTSCTS,0
+
+# --- proximity sensor ---
+PRX1_TYPE,5
+PRX1_ORIENT,0
+PRX1_YAW_CORR,0
+
+# --- simple avoidance (Loiter stops, AltHold leans away) ---
+AVOID_ENABLE,7
+AVOID_BEHAVE,1
+AVOID_MARGIN,2
+AVOID_DIST_MAX,5

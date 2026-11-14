@@ -1,0 +1,14 @@
+# local working files, not for the public repo
+lidar_handoff.zip
+CLAUDE.md
+*_backup*.param
+*_backup*.params
+px4_params_backup.params
+ardupilot/params lidar.params
+
+# build output and caches
+__pycache__/
+*.pyc
+px4_rplidar/test/host_sim/build/
+*.o
+*.exe

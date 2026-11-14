@@ -1,0 +1,87 @@
+module_name: Slamtec RPLidar 360 laser scanner (serial)
+serial_config:
+    - command: rplidar start -d ${SERIAL_DEV}
+      port_config_param:
+        name: SENS_RPLIDAR_CFG
+        group: Sensors
+      num_instances: 1
+      supports_networking: false
+
+parameters:
+    - group: Sensors
+      definitions:
+          RPL_BAUD:
+              description:
+                  short: RPLidar serial baudrate
+                  long: |
+                      Baudrate of the RPLidar. It depends on the model and cannot be changed on the sensor.
+                      Only the A2M12 (256000) has been tested with this driver.
+              type: enum
+              values:
+                  115200: 115200 (A1, A2M7, A2M8)
+                  256000: 256000 (A2M12, A3, S1)
+                  460800: 460800 (C1)
+                  1000000: 1000000 (S2, S3)
+              reboot_required: true
+              num_instances: 1
+              default: 256000
+
+          RPL_ORIENT_CFG:
+              description:
+                  short: RPLidar mounted upright or upside down
+                  long: |
+                      Upright means the rotating head is above the base (sensor on top of the vehicle).
+                      Upside down means the sensor hangs below the vehicle with the head pointing down.
+              type: enum
+              values:
+                  0: Upright
+                  1: Upside down
+              reboot_required: true
+              num_instances: 1
+              default: 0
+
+          RPL_YAW_OFF:
+              description:
+                  short: RPLidar yaw offset
+                  long: |
+                      Clockwise angle (seen from above) from the vehicle front to the sensor front.
+                      The sensor front is the side opposite its cable.
+                      0 if the cable points to the rear of the vehicle.
+              type: float
+              unit: deg
+              min: 0
+              max: 360
+              decimal: 1
+              reboot_required: true
+              num_instances: 1
+              default: 0
+
+          RPL_MIN_DIST:
+              description:
+                  short: RPLidar minimum distance
+                  long: |
+                      Returns closer than this are ignored. Increase it to mask parts of the
+                      airframe (legs, antennas) that are inside the scan plane.
+              type: float
+              unit: m
+              min: 0.05
+              max: 5
+              decimal: 2
+              reboot_required: true
+              num_instances: 1
+              default: 0.2
+
+          RPL_MAX_DIST:
+              description:
+                  short: RPLidar maximum distance
+                  long: |
+                      Returns further away than this are reported as free space.
+                      12 m for the A2M12 on a white target; less in sunlight.
+              type: float
+              unit: m
+              min: 1
+              max: 16
+              decimal: 1
+              reboot_required: true
+              num_instances: 1
+              default: 12

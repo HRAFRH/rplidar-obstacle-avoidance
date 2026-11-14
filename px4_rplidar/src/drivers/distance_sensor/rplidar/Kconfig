@@ -1,0 +1,5 @@
+menuconfig DRIVERS_DISTANCE_SENSOR_RPLIDAR
+	bool "rplidar"
+	default n
+	---help---
+		Enable support for Slamtec RPLidar 360 degree laser scanners
