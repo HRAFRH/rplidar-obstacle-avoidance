@@ -1,0 +1,5 @@
+menuconfig MODULES_AID_SWITCH
+	bool "aid_switch"
+	default n
+	---help---
+		Select the EKF2 position source (GPS, GPS + optical flow, optical flow) from an RC switch

@@ -32,7 +32,14 @@ mkdir -p "$DEST"
 cp "$HERE"/src/drivers/distance_sensor/rplidar/* "$DEST"/
 echo "copied driver to $DEST"
 
+# aid_switch: position source switch (GPS / GPS + optical flow / optical flow) from an RC switch
+MDEST="$PX4/src/modules/aid_switch"
+mkdir -p "$MDEST"
+cp "$HERE"/src/modules/aid_switch/* "$MDEST"/
+echo "copied aid_switch to $MDEST"
+
 OPTION="CONFIG_DRIVERS_DISTANCE_SENSOR_RPLIDAR=y"
+MOPTION="CONFIG_MODULES_AID_SWITCH=y"
 
 for board in "${BOARDS[@]}"; do
 	file="$PX4/$board"
@@ -56,12 +63,27 @@ for board in "${BOARDS[@]}"; do
 
 		echo "enabled in $board"
 	fi
+
+	if grep -q "^$MOPTION$" "$file"; then
+		echo "aid_switch already enabled in $board"
+
+	else
+		if grep -q "^CONFIG_MODULES_AIRSPEED_SELECTOR=" "$file"; then
+			sed -i "/^CONFIG_MODULES_AIRSPEED_SELECTOR=/i $MOPTION" "$file"
+
+		else
+			echo "$MOPTION" >> "$file"
+		fi
+
+		echo "aid_switch enabled in $board"
+	fi
 done
 
 # PX4 patches (patches/*.patch), applied once:
 #  - fmu-v6x-5v-rails-on-at-boot, cubeorangeplus-5v-rails-on-at-boot: keep the 5 V peripheral
 #    rail on during boot. Without it, PX4 switches TELEM 5 V off and on early in boot, which can
 #    hang a lidar powered from TELEM 5 V (seen on the 6X).
+#  - rc-mc-apps-start-aid-switch: start aid_switch on multicopters (it does nothing while ASW_RC_CHAN is 0).
 #  - mavlink-obstacle-distance-raw-fallback: send the raw obstacle_distance as OBSTACLE_DISTANCE
 #    when Collision Prevention is not running, and stream it on USB, so QGC can show the scan.
 # Set SKIP_BOARD_PATCHES=1 to leave PX4's own files alone.

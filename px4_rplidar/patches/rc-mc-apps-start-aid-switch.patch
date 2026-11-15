@@ -1,0 +1,16 @@
+diff --git a/ROMFS/px4fmu_common/init.d/rc.mc_apps b/ROMFS/px4fmu_common/init.d/rc.mc_apps
+index adff4e963f..8e61d211cf 100644
+--- a/ROMFS/px4fmu_common/init.d/rc.mc_apps
++++ b/ROMFS/px4fmu_common/init.d/rc.mc_apps
+@@ -37,6 +37,11 @@ mc_pos_control start
+ #
+ land_detector start multicopter
+ 
++#
++# Position source switch (GPS / GPS + optical flow / optical flow) from an RC switch, ASW_RC_CHAN.
++#
++aid_switch start
++
+ if param compare -s MC_NN_EN 1
+ then
+ 	mc_nn_control start

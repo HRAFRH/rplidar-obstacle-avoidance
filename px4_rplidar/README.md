@@ -137,3 +137,20 @@ Move a hand around the lidar and check that the right indices change.
 - The model names printed by `rplidar status` come from a best-effort table.
 - A surface the lidar cannot see (glass, very dark or thin objects, strong sunlight) reads as free space.
 - Collision Prevention only acts in Position mode.
+
+## Position source switch (`aid_switch`)
+
+`src/modules/aid_switch` selects the EKF2 horizontal position source from a 3-position RC switch:
+low = GPS, middle = GPS + optical flow, high = optical flow only. It sets `EKF2_GPS_CTRL`
+(to `ASW_GPS_CTRL`, default 7, or 0) and `EKF2_OF_CTRL` (1 or 0).
+
+- `ASW_RC_CHAN`: RC channel of the switch (1-18); 0 = off (default).
+- It only acts when the switch moves, so a source chosen in QGC (the selector above the radar
+  widget, see `../qgc`) stays until the switch moves again.
+- Optical flow only is refused while there is no valid flow (no data for 0.5 s, quality 0, or
+  above the sensor's maximum height, `SENS_FLOW_MAXHGT`). If the flow is lost for 1 s while in
+  optical-flow-only mode, GPS is added back. Each change is reported to the ground station.
+- Shell: `aid_switch status`, `aid_switch set gps|both|flow`.
+- Started on multicopters by `patches/rc-mc-apps-start-aid-switch.patch`; enabled by the install script.
+
+Tested on the Pixhawk 6X bench (2026-11-15) from the shell and from QGC. Not yet tested with a transmitter or in flight.

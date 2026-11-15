@@ -23,6 +23,8 @@ Collision Prevention directly over a serial port, and makes the scan visible to 
 |---|---|
 | [`px4_rplidar/`](px4_rplidar) | **PX4 driver** for RPLidar scanners (`rplidar start -d <port>`). Publishes `obstacle_distance` (72 sectors × 5°) for Collision Prevention. Host test bench with a simulated lidar (10 scenarios). |
 | [`px4_rplidar/patches/`](px4_rplidar/patches) | **Three PX4 fixes**: keep the 5 V peripheral rail on at boot (Pixhawk 6X, Cube Orange Plus) and send the raw scan to the ground station when Collision Prevention is idle. |
+| [`px4_rplidar/src/modules/aid_switch`](px4_rplidar/src/modules/aid_switch) | **Position source switch**: a 3-position RC switch selects GPS, GPS + optical flow or optical flow only (EKF2), with safety checks. |
+| [`mtf02p/`](mtf02p) | Setup notes for the MicoAir MTF-02P optical flow and range sensor. |
 | [`qgc/`](qgc) | **Radar inside QGroundControl**: a QML instrument loaded from QGC's settings, no QGC rebuild. |
 | [`radar_app/`](radar_app) | **Desktop radar** (Python), auto-detects the flight controller, parking-sensor beeps. |
 | [`ardupilot/`](ardupilot) | ArduCopter parameters for the same lidar (native ArduPilot support). |
@@ -160,6 +162,39 @@ Ctrl + wheel or the corner grip = size, ⛶ = full screen. Front matches the fli
 arrow; red inside `CP_DIST`, yellow up to twice that, green beyond; the vehicle icon follows the
 vehicle type; "NO LIDAR DATA" if the scan stops.
 
+## Position without GPS: optical flow (MicoAir MTF-02P)
+
+The MTF-02P (optical flow + 6 m range finder) sits under the Pixhawk 6X, lens down, on TELEM3.
+It shipped speaking MSP; it was switched to MAVLink (PX4) with MicoAssistant, through the Cube
+Orange Plus as a USB-to-serial bridge (ArduCopter serial passthrough).
+
+| Setting | Value |
+|---|---|
+| Port | TELEM3 (`/dev/ttyS1`), `MAV_1_CONFIG` 103, 115200 baud, `MAV_1_MODE` 0 |
+| EKF2 | `EKF2_OF_CTRL` 1, `EKF2_RNG_CTRL` 1, `SENS_FLOW_MAXHGT` 6.0 |
+| Rotation | `SENS_FLOW_ROT` 6 (yaw 270), verified by moving the board by hand |
+
+**Position source switch.** The `aid_switch` module reads a 3-position switch (`ASW_RC_CHAN`,
+channel 7 here): low GPS, middle GPS + flow, high flow only. It sets `EKF2_GPS_CTRL` and
+`EKF2_OF_CTRL`, acts only when the switch moves, refuses flow only without valid flow, and adds
+GPS back if the flow is lost for 1 s. The same choice is available as GPS | GPS+FLOW | FLOW
+buttons above the radar in QGroundControl.
+
+**Flow panel in QGroundControl.** Left of the radar: height from the range finder, checks for
+FLOW, POS (PX4's position estimate) and PX4 (same source as QGC's "Ready"), and a status line.
+
+**Radio.** RadioMaster Pocket (ExpressLRS 3.3.1, LBT) with an RP1 receiver on TELEM1
+(`RC_CRSF_PRT_CFG` 101, `MAV_0_CONFIG` 0), about 234 packets/s, no CRC errors. Arm switch
+channel 10; flight modes channel 6: Stabilized, Altitude, Position.
+
+**Bench result (2026-11-15).** With FLOW selected and no GPS, PX4 reports Ready in Position mode
+and arms. Switching to GPS only makes it Not Ready, because it waits for a GPS fix.
+
+<p>
+<img src="docs/images/qgc-flow-ready-no-gps.png" width="49%" alt="Flow only: Ready, no GPS">
+<img src="docs/images/qgc-gps-only-not-ready.png" width="49%" alt="GPS only: Not Ready">
+</p>
+
 ## Desktop radar
 
 Windows: double-click `radar_app/Start Lidar Radar.bat`. Ubuntu: `radar_app/start_lidar_radar.sh`.
@@ -176,6 +211,9 @@ See [`radar_app/README.md`](radar_app/README.md).
 ## Limits and next steps
 
 - Flight tests and an outdoor Collision Prevention test (needs GPS / Position mode).
+- A bench test with lidar and optical flow running together, then a hover test in Position mode
+  without GPS.
+- The Cube Orange Plus firmware does not include `aid_switch` yet.
 - PX4 Collision Prevention acts only in Position mode; ArduPilot's simple avoidance stops in Loiter.
 - The Cube Orange Plus firmware is at 99.4 % flash.
 - The QGC instrument was tested with QGroundControl Daily v5.0.3; future QGC versions may need

@@ -1,0 +1,27 @@
+module_name: aid_switch
+
+parameters:
+    - group: EKF2
+      definitions:
+          ASW_RC_CHAN:
+              description:
+                  short: RC channel of the position source switch
+                  long: |
+                      RC channel (1-18) of a 3-position switch that selects the EKF2 horizontal position source:
+                      low = GPS, middle = GPS + optical flow, high = optical flow only.
+                      The source only changes when the switch moves, so a choice made in the ground
+                      station (EKF2_GPS_CTRL / EKF2_OF_CTRL) stays until then. 0 disables the switch.
+              type: int32
+              min: 0
+              max: 18
+              default: 0
+          ASW_GPS_CTRL:
+              description:
+                  short: EKF2_GPS_CTRL value used when GPS is selected
+                  long: |
+                      Value written to EKF2_GPS_CTRL when the switch selects GPS or GPS + optical flow.
+                      7 = horizontal position, velocity and altitude (PX4 default).
+              type: int32
+              min: 1
+              max: 15
+              default: 7

@@ -12,3 +12,9 @@ __pycache__/
 px4_rplidar/test/host_sim/build/
 *.o
 *.exe
+
+# MicoAir tool (third-party binary)
+mtf02p/MicoAssistant*
+mtf02p/*.zip
+mtf02p/photos_in/
+firmware/ardupilot_cube/

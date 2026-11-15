@@ -15,6 +15,7 @@ import QtCore as QtC
 
 import QGroundControl
 import QGroundControl.Controls
+import QGroundControl.FactControls
 
 Column {
     id:         root
@@ -56,13 +57,9 @@ Column {
                                                : radarSize * saved.sizeScale
 
     function cpDist() {
-        try {
-            if (_vehicle && _vehicle.parameterManager.parameterExists(-1, "CP_DIST")) {
-                var v = _vehicle.parameterManager.getParameter(-1, "CP_DIST").rawValue
-                if (v > 0)
-                    return v
-            }
-        } catch (e) { }
+        var f = param("CP_DIST")
+        if (f && f.rawValue > 0)
+            return f.rawValue
         return 2.0
     }
 
@@ -86,6 +83,85 @@ Column {
             if (_vehicle.sub) return "boat"
         }
         return "quad"
+    }
+
+    // ---- position source (GPS / GPS + optical flow / optical flow), same parameters as PX4's aid_switch
+    property int srcMode: -1        // 0 GPS, 1 GPS + flow, 2 flow, -1 unknown / both off
+    // vehicle parameters through QGC's FactPanelController (ParameterManager's methods are not
+    // callable from QML in QGC 5). The controller binds to the vehicle that is active when it is
+    // created, so it is created once a vehicle is connected and again when the vehicle changes.
+    Component { id: factControllerComponent; FactPanelController { } }
+    property var _factController: null
+    property var _factControllerVehicle: null
+    function param(name) {
+        if (!_vehicle)
+            return null
+        if (!_factController || _factControllerVehicle !== _vehicle) {
+            if (_factController)
+                _factController.destroy()
+            _factController = factControllerComponent.createObject(root)
+            _factControllerVehicle = _vehicle
+        }
+        try {
+            if (_factController && _factController.parameterExists(-1, name))
+                return _factController.getParameterFact(-1, name, false)
+        } catch (e) { }
+        return null
+    }
+    // ---- optical flow / no-GPS readiness (properties only: getFact() from QML crashed QGC 5)
+    property real   flowHeight:     NaN     // m, downward distance sensor
+    property bool   posOk:          false   // EKF has a valid relative position and velocity
+    property bool   px4Ready:       false   // PX4 preflight checks passed
+    property bool   px4ReadyKnown:  false
+    property string readyText:      ""
+    property color  readyColor:     "#d64545"
+    function readFlow() {
+        var h = NaN
+        try { h = _vehicle.distanceSensors.rotationPitch270.rawValue } catch (e) { }
+        flowHeight = (typeof h === "number" && isFinite(h) && h > 0) ? h : NaN
+        var p = false, v = false
+        try { p = _vehicle.estimatorStatus.goodHorizPosRelEstimate.rawValue === true || _vehicle.estimatorStatus.goodHorizPosRelEstimate.rawValue === 1 } catch (e) { }
+        try { v = _vehicle.estimatorStatus.goodHorizVelEstimate.rawValue === true || _vehicle.estimatorStatus.goodHorizVelEstimate.rawValue === 1 } catch (e) { }
+        posOk = p && v
+        // same source as QGC's toolbar "Ready": on PX4 readyToFlyAvailable is false and the toolbar
+        // uses the health and arming check report instead
+        try {
+            px4ReadyKnown = true
+            if (_vehicle.armed)                    px4Ready = true
+            else if (_vehicle.readyToFlyAvailable) px4Ready = _vehicle.readyToFly
+            else                                   px4Ready = _vehicle.healthAndArmingCheckReport.canArm
+        } catch (e) { px4ReadyKnown = false; px4Ready = false }
+
+        var maxH = 6.0
+        var m = param("SENS_FLOW_MAXHGT")
+        if (m && m.rawValue > 0) maxH = m.rawValue
+        if (!_vehicle) { readyText = ""; return }
+        if (srcMode === 0)              { readyText = "GPS ONLY: FLOW OFF";                 readyColor = "#8a96a3"; return }
+        if (srcMode < 0)                { readyText = "NO POSITION SOURCE";                 readyColor = "#d64545"; return }
+        if (isNaN(flowHeight))          { readyText = "NO HEIGHT FROM FLOW SENSOR";         readyColor = "#d64545"; return }
+        if (flowHeight > maxH)          { readyText = "TOO HIGH FOR FLOW (> " + maxH.toFixed(0) + " m)"; readyColor = "#d64545"; return }
+        if (!posOk)                     { readyText = "NO VALID POSITION YET";              readyColor = "#d64545"; return }
+        if (!px4Ready)                  { readyText = "POSITION OK, PX4 NOT READY";         readyColor = "#ff9f1a"; return }
+        readyText = srcMode === 2 ? "READY: NO GPS" : "READY: GPS + FLOW"
+        readyColor = "#2fb35a"
+    }
+
+    function readSource() {
+        var g = param("EKF2_GPS_CTRL"), o = param("EKF2_OF_CTRL")
+        if (!g || !o) { srcMode = -1; return }
+        var gps = g.rawValue !== 0, of = o.rawValue !== 0
+        srcMode = gps && !of ? 0 : (gps && of ? 1 : (!gps && of ? 2 : -1))
+    }
+    function setSource(m) {
+        var g = param("EKF2_GPS_CTRL"), o = param("EKF2_OF_CTRL")
+        if (!g || !o) return
+        var a = param("ASW_GPS_CTRL")
+        var gpsOn = a && a.rawValue > 0 ? a.rawValue : 7
+        var gWant = m === 2 ? 0 : gpsOn
+        var oWant = m === 0 ? 0 : 1
+        if (g.rawValue !== gWant) g.rawValue = gWant
+        if (o.rawValue !== oWant) o.rawValue = oWant
+        srcMode = m
     }
 
     function zoom(step) {
@@ -137,7 +213,7 @@ Column {
         interval:       100
         running:        true
         repeat:         true
-        onTriggered:    { root.place(); radar.requestPaint() }
+        onTriggered:    { root.place(); radar.requestPaint(); root.readSource(); root.readFlow() }
     }
 
     // keeps the space above the attitude instrument while the radar is docked
@@ -435,6 +511,117 @@ Column {
                 font.pixelSize:     root.buttonSize * 0.7
             }
             TapHandler { onTapped: root.fullScreen = !root.fullScreen }
+        }
+
+        // optical flow panel: height, checks and the no-GPS readiness, above the source selector
+        Rectangle {
+            id:                         flowPanel
+            // left of the radar, top-aligned (above it would cover QGC's gear button)
+            anchors.right:              parent.left
+            anchors.rightMargin:        root.buttonSize * 0.3
+            anchors.top:                parent.top
+            width:                      flowCol.implicitWidth + root.buttonSize * 0.6
+            height:                     flowCol.implicitHeight + root.buttonSize * 0.4
+            radius:                     root.buttonSize * 0.3
+            color:                      "#d91c2228"
+            border.color:               "#80a0b0c0"
+            visible:                    srcBar.visible
+
+            Column {
+                id:                 flowCol
+                anchors.centerIn:   parent
+                spacing:            root.buttonSize * 0.12
+
+                Row {
+                    anchors.horizontalCenter:   parent.horizontalCenter
+                    spacing:                    root.buttonSize * 0.25
+                    Text {
+                        anchors.baseline:   hText.baseline
+                        text:               "HEIGHT"
+                        color:              "#a0b0c0"
+                        font.pixelSize:     root.buttonSize * 0.4
+                    }
+                    Text {
+                        id:             hText
+                        text:           isNaN(root.flowHeight) ? "--" : root.flowHeight.toFixed(2) + " m"
+                        color:          "#e8edf2"
+                        font.bold:      true
+                        font.pixelSize: root.buttonSize * 0.85
+                    }
+                }
+
+                Row {
+                    anchors.horizontalCenter:   parent.horizontalCenter
+                    spacing:                    root.buttonSize * 0.15
+                    Repeater {
+                        model: [
+                            { label: "FLOW", ok: root.srcMode >= 1 && !isNaN(root.flowHeight) },
+                            { label: "POS",  ok: root.posOk },
+                            { label: "PX4",  ok: root.px4Ready }
+                        ]
+                        delegate: Rectangle {
+                            width:          chk.implicitWidth + root.buttonSize * 0.4
+                            height:         root.buttonSize * 0.6
+                            radius:         height / 2
+                            color:          modelData.ok ? "#cc2fb35a" : "#cc6b2a2a"
+                            Text {
+                                id:                 chk
+                                anchors.centerIn:   parent
+                                text:               (modelData.ok ? "✓ " : "✗ ") + modelData.label
+                                color:              "#ffffff"
+                                font.pixelSize:     root.buttonSize * 0.36
+                            }
+                        }
+                    }
+                }
+
+                Rectangle {
+                    anchors.horizontalCenter:   parent.horizontalCenter
+                    width:                      readyLabel.implicitWidth + root.buttonSize * 0.6
+                    height:                     root.buttonSize * 0.75
+                    radius:                     height / 2
+                    color:                      root.readyColor
+                    visible:                    root.readyText !== ""
+                    Text {
+                        id:                 readyLabel
+                        anchors.centerIn:   parent
+                        text:               root.readyText
+                        color:              "#ffffff"
+                        font.bold:          true
+                        font.pixelSize:     root.buttonSize * 0.42
+                    }
+                }
+            }
+        }
+
+        // position source selector, just above the radar
+        Row {
+            id:                         srcBar
+            anchors.bottom:             parent.top
+            anchors.bottomMargin:       root.buttonSize * 0.2
+            anchors.horizontalCenter:   parent.horizontalCenter
+            spacing:                    root.buttonSize * 0.15
+            visible:                    root._vehicle !== null && root._vehicle !== undefined
+            Repeater {
+                model: [ { label: "GPS", mode: 0 }, { label: "GPS+FLOW", mode: 1 }, { label: "FLOW", mode: 2 } ]
+                delegate: Rectangle {
+                    property bool active: root.srcMode === modelData.mode
+                    width:          srcText.implicitWidth + root.buttonSize * 0.7
+                    height:         root.buttonSize * 0.9
+                    radius:         height / 2
+                    color:          active ? (modelData.mode === 2 ? "#e0ff9f1a" : "#e04aa3ff") : "#cc1c2228"
+                    border.color:   active ? "#ffffff" : "#80a0b0c0"
+                    Text {
+                        id:                 srcText
+                        anchors.centerIn:   parent
+                        text:               modelData.label
+                        color:              "#e8edf2"
+                        font.bold:          parent.active
+                        font.pixelSize:     root.buttonSize * 0.45
+                    }
+                    TapHandler { onTapped: root.setSource(modelData.mode) }
+                }
+            }
         }
 
         // resize grip (top-left corner): drag up/left = bigger, down/right = smaller

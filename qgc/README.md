@@ -44,6 +44,17 @@ Optional, also used on the bench:
 - Mouse wheel or the -/+ buttons: range 1.5 / 3 / 6 / 12 m.
 - The vehicle icon follows the vehicle type (quad, hexa, octo, tri, helicopter, plane, VTOL, rover, boat).
 - It is drawn on the Fly view's top level so it can be dragged; other pages cover it as usual.
+- Above the radar: the position source selector **GPS | GPS+FLOW | FLOW**. The lit button is the
+  vehicle's real setting (read from `EKF2_GPS_CTRL` / `EKF2_OF_CTRL`); tapping one sets those two
+  parameters. FLOW (optical flow only) is orange. A transmitter switch (PX4 module `aid_switch`,
+  parameter `ASW_RC_CHAN`) changes the same parameters, so the selector follows it.
+- Left of the radar: the optical flow panel. HEIGHT is the downward distance sensor (MTF-02P).
+  Checks: FLOW (flow selected and a height reading), POS (EKF has a good relative position and
+  velocity, from ESTIMATOR_STATUS), PX4 (the same source as QGC's "Ready" in the top bar: on PX4 the health and arming check report, `canArm`; `readyToFly` is not updated on PX4).
+  Status: green READY: NO GPS / READY: GPS + FLOW; orange POSITION OK, PX4 NOT READY (open QGC's
+  "Not Ready" list to see why); red with the reason otherwise (no height, too high, no position).
+- Note for QGC 5: read vehicle values through properties (e.g. `estimatorStatus.goodHorizPosRelEstimate`).
+  Calling `getFact()` from this QML crashed QGC (heap corruption ~15 s after connecting).
 
 ## Going back to QGC's normal instrument
 
